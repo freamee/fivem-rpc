@@ -39,7 +39,7 @@ var AquiverPromise = class {
   }
 };
 
-// src/client.ts
+// src/rpc_client.ts
 var _pendings, _rpcListeners, _events, _idCounter, _getGlobalNamePrefix, getGlobalNamePrefix_fn, ___triggerServer__, __triggerServer___fn, ___callServer__, __callServer___fn, ___on__, __on___fn, ___off__, __off___fn, ___trigger__, __trigger___fn, ___register__, __register___fn, ___unregister__, __unregister___fn, ___call__, __call___fn, _generateId, generateId_fn, _a;
 new (_a = class {
   constructor() {
@@ -194,4 +194,4 @@ new (_a = class {
   __privateWrapper(this, _idCounter)._++;
   return __privateGet(this, _idCounter);
 }, _a)();
-//# sourceMappingURL=client.js.map
+//# sourceMappingURL=rpc_client.js.map

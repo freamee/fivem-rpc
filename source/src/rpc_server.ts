@@ -185,7 +185,7 @@ const rp = new class ServerRPC {
         return this.#pendings[id].promise;
     }
 
-    public callClientGlobal(source: number, eventName: string, args?: any) {
+    public callGlobalClient(source: number, eventName: string, args?: any) {
         return this.#__callClient__(source, eventName + this.#getGlobalNamePrefix(), args);
     }
 
@@ -197,7 +197,7 @@ const rp = new class ServerRPC {
         emitNet("rpc:TRIGGER_CLIENT", source, { eventName, args });
     }
 
-    public triggerClientGlobal(source: number, eventName: string, args?: any) {
+    public triggerGlobalClient(source: number, eventName: string, args?: any) {
         this.#__triggerClient__(source, eventName + this.#getGlobalNamePrefix(), args);
     }
 

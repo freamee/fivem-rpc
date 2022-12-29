@@ -39,7 +39,7 @@ var AquiverPromise = class {
   }
 };
 
-// src/server.ts
+// src/rpc_server.ts
 var _rpcListeners, _pendings, _events, _idCounter, _getGlobalNamePrefix, getGlobalNamePrefix_fn, ___on__, __on___fn, ___off__, __off___fn, ___trigger__, __trigger___fn, ___register__, __register___fn, ___unregister__, __unregister___fn, ___call__, __call___fn, ___callClient__, __callClient___fn, ___triggerClient__, __triggerClient___fn, _generateId, generateId_fn, _a;
 var rp = new (_a = class {
   constructor() {
@@ -120,13 +120,13 @@ var rp = new (_a = class {
   call(eventName, args) {
     return __privateMethod(this, ___call__, __call___fn).call(this, eventName, args, { env: "server" });
   }
-  callClientGlobal(source, eventName, args) {
+  callGlobalClient(source, eventName, args) {
     return __privateMethod(this, ___callClient__, __callClient___fn).call(this, source, eventName + __privateMethod(this, _getGlobalNamePrefix, getGlobalNamePrefix_fn).call(this), args);
   }
   callClient(source, eventName, args) {
     return __privateMethod(this, ___callClient__, __callClient___fn).call(this, source, eventName, args);
   }
-  triggerClientGlobal(source, eventName, args) {
+  triggerGlobalClient(source, eventName, args) {
     __privateMethod(this, ___triggerClient__, __triggerClient___fn).call(this, source, eventName + __privateMethod(this, _getGlobalNamePrefix, getGlobalNamePrefix_fn).call(this), args);
   }
   triggerClient(source, eventName, args) {
@@ -188,4 +188,4 @@ var rp = new (_a = class {
   __privateWrapper(this, _idCounter)._++;
   return __privateGet(this, _idCounter);
 }, _a)();
-//# sourceMappingURL=server.js.map
+//# sourceMappingURL=rpc_server.js.map

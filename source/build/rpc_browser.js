@@ -10620,13 +10620,12 @@ var require_follow_redirects = __commonJS({
   }
 });
 
-// src/browser.ts
-var browser_exports = {};
-__export(browser_exports, {
-  BrowserRPC: () => BrowserRPC,
-  rpc: () => rpc
+// src/rpc_browser.ts
+var rpc_browser_exports = {};
+__export(rpc_browser_exports, {
+  default: () => rpc_browser_default
 });
-module.exports = __toCommonJS(browser_exports);
+module.exports = __toCommonJS(rpc_browser_exports);
 
 // node_modules/axios/lib/helpers/bind.js
 function bind(fn, thisArg) {
@@ -13183,48 +13182,48 @@ var {
   mergeConfig: mergeConfig2
 } = axios_default;
 
-// src/browser.ts
-var BrowserRPC = class {
-  constructor() {
-    this.resourceName = GetParentResourceName();
-  }
-  triggerServer(eventName, args) {
-    axios_default.post(`https://${this.resourceName}/BROWSER_TO_SERVER`, {
-      eventName,
-      args
-    });
-  }
-  callServer(eventName, args) {
-    return __async(this, null, function* () {
-      const response = yield axios_default.post(`https://${this.resourceName}/BROWSER_CALL_SERVER`, {
-        eventName,
-        args
-      });
-      return response.data;
-    });
-  }
-  callClient(eventName, args) {
-    return __async(this, null, function* () {
-      const response = yield axios_default.post(`https://${this.resourceName}/BROWSER_CALL_CLIENT`, {
-        eventName,
-        args
-      });
-      return response.data;
-    });
-  }
-  triggerClient(eventName, args) {
-    axios_default.post(`https://${this.resourceName}/BROWSER_TO_CLIENT`, {
-      eventName,
-      args
-    });
-  }
+// src/config.ts
+var CONFIG = {
+  RESOURCE_NAME: "fivem-rpc"
 };
-var rpc = new BrowserRPC();
+
+// src/rpc_browser.ts
+var rpc_browser_default = new class BrowserRPC {
+  constructor() {
+  }
+  triggerGlobalServer(eventName, args) {
+    axios_default.post(`https://${CONFIG.RESOURCE_NAME}/BROWSER_TO_SERVER`, {
+      eventName,
+      args
+    });
+  }
+  callGlobalServer(eventName, args) {
+    return __async(this, null, function* () {
+      const response = yield axios_default.post(`https://${CONFIG.RESOURCE_NAME}/BROWSER_CALL_SERVER`, {
+        eventName,
+        args
+      });
+      return response.data;
+    });
+  }
+  callGlobalClient(eventName, args) {
+    return __async(this, null, function* () {
+      const response = yield axios_default.post(`https://${CONFIG.RESOURCE_NAME}/BROWSER_CALL_CLIENT`, {
+        eventName,
+        args
+      });
+      return response.data;
+    });
+  }
+  triggerGlobalClient(eventName, args) {
+    axios_default.post(`https://${CONFIG.RESOURCE_NAME}/BROWSER_TO_CLIENT`, {
+      eventName,
+      args
+    });
+  }
+}();
 // Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {
-  BrowserRPC,
-  rpc
-});
+0 && (module.exports = {});
 /*!
  * mime-db
  * Copyright(c) 2014 Jonathan Ong
@@ -13237,4 +13236,4 @@ var rpc = new BrowserRPC();
  * Copyright(c) 2015 Douglas Christopher Wilson
  * MIT Licensed
  */
-//# sourceMappingURL=browser.js.map
+//# sourceMappingURL=rpc_browser.js.map
