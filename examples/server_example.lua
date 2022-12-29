@@ -1,3 +1,6 @@
+-- Enabling debug
+exports["fivem-rpc"]:debug(true)
+
 -- Local event, can only be triggered within this resource.
 exports["fivem-rpc"]:on("onJobStarted", function(a)
     print(a)
@@ -17,7 +20,7 @@ exports["fivem-rpc"]:triggerGlobal("onPlayerLogin", 2)
 
 
 -- Calling a client listener
-RegisterCommand("isSw", function(source)
+RegisterCommand("swimtest", function(source)
     local res = exports["fivem-rpc"]:callClient(source, "isPlayerSwimming")
     print(res)
 end)

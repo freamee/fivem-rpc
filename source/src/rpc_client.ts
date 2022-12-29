@@ -15,6 +15,8 @@ new class ClientRPC {
 
     #idCounter: number = 1;
 
+    #DEBUG_ENABLED = false;
+
     constructor() {
         RegisterNuiCallbackType("BROWSER_TO_SERVER");
         onNet("__cfx_nui:BROWSER_TO_SERVER", ({ eventName, args }, cb) => {
@@ -73,19 +75,31 @@ new class ClientRPC {
 
             globalThis.exports(methodName, this[methodName].bind(this));
         });
+
+        globalThis.exports("debug", (state: boolean) => this.#DEBUG_ENABLED = state);
+    }
+
+    #debug(message: string) {
+        if (!this.#DEBUG_ENABLED) return;
+
+        console.log(`^3[Client]: ${message}`);
     }
 
     #getGlobalNamePrefix() {
-        return GetInvokingResource() || GetCurrentResourceName();
+        return ":" + GetInvokingResource() || GetCurrentResourceName();
     }
 
     /** Backend function for triggerserver. Do not use if you dunno what you are doing. */
-    #__triggerServer__(eventName: string, args: any, ev: ClientEventInfo) {
+    #__triggerServer__(eventName: string, args: any, ev: ClientEventInfo, global: boolean = false) {
+        if (global) {
+            eventName += this.#getGlobalNamePrefix();
+        }
+
         emitNet("rpc:TRIGGER_SERVER", { eventName, args, ev });
     }
 
     public triggerGlobalServer(eventName: string, args?: any) {
-        this.#__triggerServer__(eventName + this.#getGlobalNamePrefix(), args, { env: "client" });
+        this.#__triggerServer__(eventName, args, { env: "client" }, true);
     }
 
     /** Trigger a server event from clientside. (Client->Server) */
@@ -93,7 +107,11 @@ new class ClientRPC {
         this.#__triggerServer__(eventName, args, { env: "client" });
     }
 
-    #__callServer__(eventName: string, args: any, ev: ClientEventInfo) {
+    #__callServer__(eventName: string, args: any, ev: ClientEventInfo, global: boolean = false) {
+        if (global) {
+            eventName += this.#getGlobalNamePrefix();
+        }
+
         const id = this.#generateId();
 
         this.#pendings[id] = new AquiverPromise();
@@ -104,14 +122,28 @@ new class ClientRPC {
     }
 
     public callGlobalServer(eventName: string, args?: any) {
-        return this.#__callServer__(eventName + this.#getGlobalNamePrefix(), args, { env: "client" });
+        return this.#__callServer__(eventName + this.#getGlobalNamePrefix(), args, { env: "client" }, true);
     }
 
     public callServer(eventName: string, args?: any) {
         return this.#__callServer__(eventName, args, { env: "client" });
     }
 
-    #__on__(eventName: string, cb: EventCallback) {
+    #__on__(eventName: string, cb: EventCallback, global: boolean = false) {
+        if (typeof eventName !== "string") {
+            this.#debug(`__on__ eventName is not a string.`);
+            return;
+        }
+
+        if (typeof eventName !== "string") {
+            this.#debug(`__on__ cb is not a function.`);
+            return;
+        }
+
+        if (global) {
+            eventName += this.#getGlobalNamePrefix();
+        }
+
         if (!this.#events[eventName]) {
             this.#events[eventName] = new Set();
         }
@@ -121,7 +153,21 @@ new class ClientRPC {
         return () => this.#__off__(eventName, cb);
     }
 
-    #__off__(eventName: string, cb: EventCallback) {
+    #__off__(eventName: string, cb: EventCallback, global: boolean = false) {
+        if (typeof eventName !== "string") {
+            this.#debug(`__off__ eventName is not a string.`);
+            return;
+        }
+
+        if (typeof cb !== "function") {
+            this.#debug(`__off__ cb is not a function.`);
+            return;
+        }
+
+        if (global) {
+            eventName += this.#getGlobalNamePrefix();
+        }
+
         if (!this.#events[eventName]) return false;
 
         this.#events[eventName].delete(cb);
@@ -130,7 +176,7 @@ new class ClientRPC {
     }
 
     public onGlobal(eventName: string, cb: EventCallback) {
-        return this.#__on__(eventName + this.#getGlobalNamePrefix(), cb);
+        return this.#__on__(eventName, cb, true);
     }
 
     public on(eventName: string, cb: EventCallback) {
@@ -138,7 +184,7 @@ new class ClientRPC {
     }
 
     public triggerGlobal(eventName: string, args?: any) {
-        this.#__trigger__(eventName + this.#getGlobalNamePrefix(), args, { env: "client" });
+        this.#__trigger__(eventName, args, { env: "client" }, true);
     }
 
     public trigger(eventName: string, args?: any) {
@@ -146,7 +192,11 @@ new class ClientRPC {
     }
 
     /** Backend function for triggering an event locally. Do not use if you dunno what you are doing. */
-    #__trigger__(eventName: string, args: any, ev: ClientEventInfo) {
+    #__trigger__(eventName: string, args: any, ev: ClientEventInfo, global: boolean = false) {
+        if (global) {
+            eventName += this.#getGlobalNamePrefix();
+        }
+
         const registeredEvents = this.#events[eventName];
         if (!registeredEvents) return;
 
@@ -155,10 +205,26 @@ new class ClientRPC {
         });
     }
 
-    #__register__(eventName: string, cb: RemoteCallback) {
-        if (typeof eventName !== "string" || typeof cb !== "function") return;
+    #__register__(eventName: string, cb: RemoteCallback, global: boolean = false) {
+        if (typeof eventName !== "string") {
+            this.#debug(`__register__ eventName is not a string.`);
+            return;
+        }
 
-        console.log(`client register ${eventName}`);
+        if (typeof cb !== "function") {
+            this.#debug(`__register__ cb is not a function.`);
+            return;
+        }
+
+        if (global) {
+            eventName += this.#getGlobalNamePrefix();
+        }
+
+        if (this.#rpcListeners[eventName]) {
+            this.#debug(`__register__ ${eventName} already exist, it was overwritten with a new function.`);
+        }
+
+        this.#debug(`__register__: ${eventName}`);
 
         this.#rpcListeners[eventName] = cb;
 
@@ -166,7 +232,7 @@ new class ClientRPC {
     }
 
     public registerGlobal(eventName: string, cb: RemoteCallback) {
-        return this.#__register__(eventName + this.#getGlobalNamePrefix(), cb);
+        return this.#__register__(eventName, cb, true);
     }
 
     /**
@@ -182,27 +248,35 @@ new class ClientRPC {
     }
 
     public unregisterGlobal(eventName: string) {
-        return this.#__unregister__(eventName);
+        return this.#__unregister__(eventName, true);
     }
 
-    #__unregister__(eventName: string) {
+    #__unregister__(eventName: string, global: boolean = false) {
+        if (global) {
+            eventName += this.#getGlobalNamePrefix();
+        }
+
         if (!this.#rpcListeners[eventName]) return false;
 
-        console.log(`unregister ${eventName}`);
+        this.#debug(`__unregister__: ${eventName}`);
 
         delete this.#rpcListeners[eventName];
 
         return true;
     }
 
-    #__call__<T>(eventName: string, args: any, ev: ClientEventInfo): Promise<T> {
+    #__call__<T>(eventName: string, args: any, ev: ClientEventInfo, global: boolean = false): Promise<T> {
+        if (global) {
+            eventName += this.#getGlobalNamePrefix();
+        }
+
         if (typeof this.#rpcListeners[eventName] !== "function") return Promise.reject(`Call event function does not exist: ${eventName}`);
 
         return Promise.resolve(this.#rpcListeners[eventName](args, ev));
     }
 
     public callGlobal<T>(eventName: string, args?: any): Promise<T> {
-        return this.#__call__(eventName + this.#getGlobalNamePrefix(), args, { env: "client" });
+        return this.#__call__(eventName, args, { env: "client" }, true);
     }
 
     public call<T>(eventName: string, args?: any): Promise<T> {
