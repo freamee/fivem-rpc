@@ -11,13 +11,11 @@ exports["fivem-rpc"]:onGlobal("onPlayerLogin", function(playerSource)
     print(playerSource)
 end)
 
-
 -- Triggering the local event
 exports["fivem-rpc"]:trigger("onJobStarted", "miner")
 
 -- Triggering the global event
 exports["fivem-rpc"]:triggerGlobal("onPlayerLogin", 2)
-
 
 -- Calling a client listener
 RegisterCommand("swimtest", function(source)

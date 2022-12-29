@@ -52,6 +52,20 @@ new class ServerRPC {
         });
 
         globalThis.exports("debug", (state: boolean) => this.#DEBUG_ENABLED = state);
+
+        AddEventHandler("onResourceStop", (resourceName) => {
+            for (const key in this.#events) {
+                if (key.includes(resourceName)) {
+                    delete this.#events[key];
+                }
+            }
+
+            for (const key in this.#rpcListeners) {
+                if (key.includes(resourceName)) {
+                    delete this.#rpcListeners[key];
+                }
+            }
+        });
     }
 
     #debug(message: string) {
@@ -60,7 +74,7 @@ new class ServerRPC {
         console.log(`^3[Server]: ${message}`);
     }
 
-    #getGlobalNamePrefix() {
+    #getNamePrefix() {
         return ":" + GetInvokingResource() || GetCurrentResourceName();
     }
 
@@ -110,8 +124,8 @@ new class ServerRPC {
             return;
         }
 
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         if (!this.#events[eventName]) {
@@ -136,8 +150,8 @@ new class ServerRPC {
             return;
         }
 
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         if (!this.#events[eventName]) return false;
@@ -160,8 +174,8 @@ new class ServerRPC {
 
     /** Backend function for triggering an event locally. Do not use if you dunno what you are doing. */
     #__trigger__(eventName: string, args: any, ev: ServerEventInfo, global: boolean = false) {
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         const registeredEvents = this.#events[eventName];
@@ -183,8 +197,8 @@ new class ServerRPC {
             return;
         }
 
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         if (this.#rpcListeners[eventName]) {
@@ -211,8 +225,8 @@ new class ServerRPC {
     }
 
     #__unregister__(eventName: string, global: boolean = false) {
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         if (!this.#rpcListeners[eventName]) return false;
@@ -234,8 +248,8 @@ new class ServerRPC {
     }
 
     #__call__<T>(eventName: string, args: any, ev: ServerEventInfo, global: boolean = false): Promise<T> {
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         if (typeof this.#rpcListeners[eventName] !== "function") return Promise.reject(`Call event function does not exist: ${eventName}`);
@@ -253,8 +267,8 @@ new class ServerRPC {
     }
 
     #__callClient__(source: number, eventName: string, args: any, global: boolean = false) {
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         const id = this.#generateId();
@@ -275,8 +289,8 @@ new class ServerRPC {
     }
 
     #__triggerClient__(source: number, eventName: string, args: any, global: boolean = false) {
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         emitNet("rpc:TRIGGER_CLIENT", source, { eventName, args });

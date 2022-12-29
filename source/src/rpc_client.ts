@@ -77,6 +77,20 @@ new class ClientRPC {
         });
 
         globalThis.exports("debug", (state: boolean) => this.#DEBUG_ENABLED = state);
+
+        AddEventHandler("onResourceStop", (resourceName) => {
+            for (const key in this.#events) {
+                if (key.includes(resourceName)) {
+                    delete this.#events[key];
+                }
+            }
+
+            for (const key in this.#rpcListeners) {
+                if (key.includes(resourceName)) {
+                    delete this.#rpcListeners[key];
+                }
+            }
+        });
     }
 
     #debug(message: string) {
@@ -85,14 +99,14 @@ new class ClientRPC {
         console.log(`^3[Client]: ${message}`);
     }
 
-    #getGlobalNamePrefix() {
+    #getNamePrefix() {
         return ":" + GetInvokingResource() || GetCurrentResourceName();
     }
 
     /** Backend function for triggerserver. Do not use if you dunno what you are doing. */
     #__triggerServer__(eventName: string, args: any, ev: ClientEventInfo, global: boolean = false) {
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         emitNet("rpc:TRIGGER_SERVER", { eventName, args, ev });
@@ -108,8 +122,8 @@ new class ClientRPC {
     }
 
     #__callServer__(eventName: string, args: any, ev: ClientEventInfo, global: boolean = false) {
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         const id = this.#generateId();
@@ -122,7 +136,7 @@ new class ClientRPC {
     }
 
     public callGlobalServer(eventName: string, args?: any) {
-        return this.#__callServer__(eventName + this.#getGlobalNamePrefix(), args, { env: "client" }, true);
+        return this.#__callServer__(eventName + this.#getNamePrefix(), args, { env: "client" }, true);
     }
 
     public callServer(eventName: string, args?: any) {
@@ -140,8 +154,8 @@ new class ClientRPC {
             return;
         }
 
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         if (!this.#events[eventName]) {
@@ -164,8 +178,8 @@ new class ClientRPC {
             return;
         }
 
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         if (!this.#events[eventName]) return false;
@@ -193,8 +207,8 @@ new class ClientRPC {
 
     /** Backend function for triggering an event locally. Do not use if you dunno what you are doing. */
     #__trigger__(eventName: string, args: any, ev: ClientEventInfo, global: boolean = false) {
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         const registeredEvents = this.#events[eventName];
@@ -216,8 +230,8 @@ new class ClientRPC {
             return;
         }
 
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         if (this.#rpcListeners[eventName]) {
@@ -252,8 +266,8 @@ new class ClientRPC {
     }
 
     #__unregister__(eventName: string, global: boolean = false) {
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         if (!this.#rpcListeners[eventName]) return false;
@@ -266,8 +280,8 @@ new class ClientRPC {
     }
 
     #__call__<T>(eventName: string, args: any, ev: ClientEventInfo, global: boolean = false): Promise<T> {
-        if (global) {
-            eventName += this.#getGlobalNamePrefix();
+        if (!global) {
+            eventName += this.#getNamePrefix();
         }
 
         if (typeof this.#rpcListeners[eventName] !== "function") return Promise.reject(`Call event function does not exist: ${eventName}`);

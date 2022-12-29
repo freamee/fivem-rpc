@@ -40,11 +40,11 @@ var AquiverPromise = class {
 };
 
 // src/rpc_server.ts
-var _rpcListeners, _pendings, _events, _idCounter, _DEBUG_ENABLED, _debug, debug_fn, _getGlobalNamePrefix, getGlobalNamePrefix_fn, ___onMany__, __onMany___fn, ___on__, __on___fn, ___off__, __off___fn, ___trigger__, __trigger___fn, ___register__, __register___fn, ___unregister__, __unregister___fn, ___call__, __call___fn, ___callClient__, __callClient___fn, ___triggerClient__, __triggerClient___fn, _generateId, generateId_fn, _a;
+var _rpcListeners, _pendings, _events, _idCounter, _DEBUG_ENABLED, _debug, debug_fn, _getNamePrefix, getNamePrefix_fn, ___onMany__, __onMany___fn, ___on__, __on___fn, ___off__, __off___fn, ___trigger__, __trigger___fn, ___register__, __register___fn, ___unregister__, __unregister___fn, ___call__, __call___fn, ___callClient__, __callClient___fn, ___triggerClient__, __triggerClient___fn, _generateId, generateId_fn, _a;
 new (_a = class {
   constructor() {
     __privateAdd(this, _debug);
-    __privateAdd(this, _getGlobalNamePrefix);
+    __privateAdd(this, _getNamePrefix);
     __privateAdd(this, ___onMany__);
     __privateAdd(this, ___on__);
     __privateAdd(this, ___off__);
@@ -87,6 +87,18 @@ new (_a = class {
       globalThis.exports(methodName, this[methodName].bind(this));
     });
     globalThis.exports("debug", (state) => __privateSet(this, _DEBUG_ENABLED, state));
+    AddEventHandler("onResourceStop", (resourceName) => {
+      for (const key in __privateGet(this, _events)) {
+        if (key.includes(resourceName)) {
+          delete __privateGet(this, _events)[key];
+        }
+      }
+      for (const key in __privateGet(this, _rpcListeners)) {
+        if (key.includes(resourceName)) {
+          delete __privateGet(this, _rpcListeners)[key];
+        }
+      }
+    });
   }
   onGlobalMany(e) {
     __privateMethod(this, ___onMany__, __onMany___fn).call(this, e, true);
@@ -146,7 +158,7 @@ new (_a = class {
   if (!__privateGet(this, _DEBUG_ENABLED))
     return;
   console.log(`^3[Server]: ${message}`);
-}, _getGlobalNamePrefix = new WeakSet(), getGlobalNamePrefix_fn = function() {
+}, _getNamePrefix = new WeakSet(), getNamePrefix_fn = function() {
   return ":" + GetInvokingResource() || GetCurrentResourceName();
 }, ___onMany__ = new WeakSet(), __onMany___fn = function(e, global = false) {
   if (!e || typeof e !== "object") {
@@ -165,8 +177,8 @@ new (_a = class {
     __privateMethod(this, _debug, debug_fn).call(this, `__on__ cb is not a function.`);
     return;
   }
-  if (global) {
-    eventName += __privateMethod(this, _getGlobalNamePrefix, getGlobalNamePrefix_fn).call(this);
+  if (!global) {
+    eventName += __privateMethod(this, _getNamePrefix, getNamePrefix_fn).call(this);
   }
   if (!__privateGet(this, _events)[eventName]) {
     __privateGet(this, _events)[eventName] = /* @__PURE__ */ new Set();
@@ -183,8 +195,8 @@ new (_a = class {
     __privateMethod(this, _debug, debug_fn).call(this, `__off__ cb is not a function.`);
     return;
   }
-  if (global) {
-    eventName += __privateMethod(this, _getGlobalNamePrefix, getGlobalNamePrefix_fn).call(this);
+  if (!global) {
+    eventName += __privateMethod(this, _getNamePrefix, getNamePrefix_fn).call(this);
   }
   if (!__privateGet(this, _events)[eventName])
     return false;
@@ -192,8 +204,8 @@ new (_a = class {
   __privateGet(this, _events)[eventName].delete(cb);
   return true;
 }, ___trigger__ = new WeakSet(), __trigger___fn = function(eventName, args, ev, global = false) {
-  if (global) {
-    eventName += __privateMethod(this, _getGlobalNamePrefix, getGlobalNamePrefix_fn).call(this);
+  if (!global) {
+    eventName += __privateMethod(this, _getNamePrefix, getNamePrefix_fn).call(this);
   }
   const registeredEvents = __privateGet(this, _events)[eventName];
   if (!registeredEvents)
@@ -210,8 +222,8 @@ new (_a = class {
     __privateMethod(this, _debug, debug_fn).call(this, `__register__ cb is not a function.`);
     return;
   }
-  if (global) {
-    eventName += __privateMethod(this, _getGlobalNamePrefix, getGlobalNamePrefix_fn).call(this);
+  if (!global) {
+    eventName += __privateMethod(this, _getNamePrefix, getNamePrefix_fn).call(this);
   }
   if (__privateGet(this, _rpcListeners)[eventName]) {
     __privateMethod(this, _debug, debug_fn).call(this, `__register__ ${eventName} already exist, it was overwritten with a new function.`);
@@ -220,8 +232,8 @@ new (_a = class {
   __privateGet(this, _rpcListeners)[eventName] = cb;
   return () => this.unregister(eventName);
 }, ___unregister__ = new WeakSet(), __unregister___fn = function(eventName, global = false) {
-  if (global) {
-    eventName += __privateMethod(this, _getGlobalNamePrefix, getGlobalNamePrefix_fn).call(this);
+  if (!global) {
+    eventName += __privateMethod(this, _getNamePrefix, getNamePrefix_fn).call(this);
   }
   if (!__privateGet(this, _rpcListeners)[eventName])
     return false;
@@ -229,23 +241,23 @@ new (_a = class {
   delete __privateGet(this, _rpcListeners)[eventName];
   return true;
 }, ___call__ = new WeakSet(), __call___fn = function(eventName, args, ev, global = false) {
-  if (global) {
-    eventName += __privateMethod(this, _getGlobalNamePrefix, getGlobalNamePrefix_fn).call(this);
+  if (!global) {
+    eventName += __privateMethod(this, _getNamePrefix, getNamePrefix_fn).call(this);
   }
   if (typeof __privateGet(this, _rpcListeners)[eventName] !== "function")
     return Promise.reject(`Call event function does not exist: ${eventName}`);
   return Promise.resolve(__privateGet(this, _rpcListeners)[eventName](args, ev));
 }, ___callClient__ = new WeakSet(), __callClient___fn = function(source, eventName, args, global = false) {
-  if (global) {
-    eventName += __privateMethod(this, _getGlobalNamePrefix, getGlobalNamePrefix_fn).call(this);
+  if (!global) {
+    eventName += __privateMethod(this, _getNamePrefix, getNamePrefix_fn).call(this);
   }
   const id = __privateMethod(this, _generateId, generateId_fn).call(this);
   __privateGet(this, _pendings)[id] = new AquiverPromise();
   emitNet("rpc:CALL_CLIENT", source, { eventName, args, id });
   return __privateGet(this, _pendings)[id].promise;
 }, ___triggerClient__ = new WeakSet(), __triggerClient___fn = function(source, eventName, args, global = false) {
-  if (global) {
-    eventName += __privateMethod(this, _getGlobalNamePrefix, getGlobalNamePrefix_fn).call(this);
+  if (!global) {
+    eventName += __privateMethod(this, _getNamePrefix, getNamePrefix_fn).call(this);
   }
   emitNet("rpc:TRIGGER_CLIENT", source, { eventName, args });
 }, _generateId = new WeakSet(), generateId_fn = function() {
